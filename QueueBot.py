@@ -61,14 +61,13 @@ def startqueue(update, context):
 def namequeue(update, context):  # вивід черги
     name = update.message.text + "\n\n"  # записуємо введену назву черги в змінну
     queue = ""
-    for i in range(1, 31):
+    for i in range(1, count+1):
         queue += str(i) + ".\n"  # створюємо список (1.\n2.\n)
 
     update.message.reply_text(
         name + queue, reply_markup=keyboard
     )  # надсилаємо повідомлення: назва черги, список та
     # клавіатуру
-    # update.message.reply_text(update.message.from_user.first_name+' '+update.message.from_user.last_name)
     return ConversationHandler.END  # повертаємо кінець діалогу
 
 
@@ -101,10 +100,18 @@ def keyboard_callback(update, context):
     #  якщо знайдено у списку і cancel
     elif str(update.callback_query.message.text).find(str(update.callback_query.from_user.first_name) + " " +
                                                       str(update.callback_query.from_user.last_name)) != -1 and update.callback_query.data == "cancel":
-        ###
-        #  видалити із списку, повернути кнопку на місце!!!
-        ###
-        context.bot.answer_callback_query(callback_query_id=update.callback_query.id, text='Відмінено!',show_alert=True)
+        ###                        ###
+        #тут!!!
+        ###                        ###
+        update.callback_query.edit_message_text(
+            text=update.callback_query.message.text.replace(
+                f"{update.callback_query.from_user.first_name} {update.callback_query.from_user.last_name}",
+                f"",
+                1
+            ),
+            reply_markup=InlineKeyboardMarkup(buttons),
+        )
+        context.bot.answer_callback_query(callback_query_id=update.callback_query.id, text='Відмінено!', show_alert=True)
 
     # якщо не знайдено у списку і cancel
     elif str(update.callback_query.message.text).find(str(update.callback_query.from_user.first_name) + " " +
