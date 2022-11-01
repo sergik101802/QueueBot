@@ -24,98 +24,17 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 NAME = range(1)
 
+count = 28
+number = count // 4 if count % 4 == 0 else count // 4 + 1
 buttons = [
     [
-        InlineKeyboardButton("1", callback_data="1"),
-    ],
-    [
-        InlineKeyboardButton("2", callback_data="2"),
-    ],
-    [
-        InlineKeyboardButton("3", callback_data="3"),
-    ],
-    [
-        InlineKeyboardButton("4", callback_data="4"),
-    ],
-    [
-        InlineKeyboardButton("5", callback_data="5"),
-    ],
-    [
-        InlineKeyboardButton("6", callback_data="6"),
-    ],
-    [
-        InlineKeyboardButton("7", callback_data="7"),
-    ],
-    [
-        InlineKeyboardButton("8", callback_data="8"),
-    ],
-    [
-        InlineKeyboardButton("9", callback_data="9"),
-    ],
-    [
-        InlineKeyboardButton("10", callback_data="10"),
-    ],
-    [
-        InlineKeyboardButton("11", callback_data="11"),
-    ],
-    [
-        InlineKeyboardButton("12", callback_data="12"),
-    ],
-    [
-        InlineKeyboardButton("13", callback_data="13"),
-    ],
-    [
-        InlineKeyboardButton("14", callback_data="14"),
-    ],
-    [
-        InlineKeyboardButton("15", callback_data="15"),
-    ],
-    [
-        InlineKeyboardButton("16", callback_data="16"),
-    ],
-    [
-        InlineKeyboardButton("17", callback_data="17"),
-    ],
-    [
-        InlineKeyboardButton("18", callback_data="18"),
-    ],
-    [
-        InlineKeyboardButton("19", callback_data="19"),
-    ],
-    [
-        InlineKeyboardButton("20", callback_data="20"),
-    ],
-    [
-        InlineKeyboardButton("21", callback_data="21"),
-    ],
-    [
-        InlineKeyboardButton("22", callback_data="22"),
-    ],
-    [
-        InlineKeyboardButton("23", callback_data="23"),
-    ],
-    [
-        InlineKeyboardButton("24", callback_data="24"),
-    ],
-    [
-        InlineKeyboardButton("25", callback_data="25"),
-    ],
-    [
-        InlineKeyboardButton("26", callback_data="26"),
-    ],
-    [
-        InlineKeyboardButton("27", callback_data="27"),
-    ],
-    [
-        InlineKeyboardButton("28", callback_data="28"),
-    ],
-    [
-        InlineKeyboardButton("29", callback_data="29"),
-    ],
-    [
-        InlineKeyboardButton("30", callback_data="30"),
+        InlineKeyboardButton(f"{j + 1}", callback_data=f"{j + 1}")
+        for j in range(i * 4, i * 4 + count % 4 if i * 4 + 4 > count else i * 4 + 4)
     ]
+    for i in range(number)
 ]
+buttons.append([InlineKeyboardButton("Cancel", callback_data="cancel")])
+
 # https://core.telegram.org/bots/api#inlinekeyboardmarkup
 
 keyboard = InlineKeyboardMarkup(buttons)  # засовуємо наші кнопочки в єдину клавіатуру
@@ -160,19 +79,38 @@ def cancel(update, context):  # відміна черги (не працює, х
 
 def keyboard_callback(update, context):
     if str(update.callback_query.message.text).find(str(update.callback_query.from_user.first_name) + " " +
-                      str(update.callback_query.from_user.last_name)) == -1:
-        buttons.remove([InlineKeyboardButton(update.callback_query.data, callback_data=update.callback_query.data)])
-        keyboard = InlineKeyboardMarkup(buttons)
-        update.callback_query.edit_message_text(
-            text=update.callback_query.message.text.replace(
-                f"{update.callback_query.data}.",
-                f"{update.callback_query.data}. {update.callback_query.from_user.first_name} {update.callback_query.from_user.last_name}",
-                1
-            ),
-            reply_markup=keyboard,
-        )
+                                                    str(update.callback_query.from_user.last_name)) == -1 and str(update.callback_query.data) != 'cancel':
+        for i in range(0, len(buttons)-1):
+            for j in range (0, len(buttons[i])):
+                if (buttons[i][j] == InlineKeyboardButton(update.callback_query.data,
+                                                       callback_data=update.callback_query.data)):
+                    buttons[i].remove(
+                        InlineKeyboardButton(update.callback_query.data, callback_data=update.callback_query.data))
+                    keyboard = InlineKeyboardMarkup(buttons)
+                    update.callback_query.edit_message_text(
+                        text=update.callback_query.message.text.replace(
+                            f"{update.callback_query.data}.",
+                            f"{update.callback_query.data}. {update.callback_query.from_user.first_name} {update.callback_query.from_user.last_name}",
+                            1
+                        ),
+                        reply_markup=keyboard,
+                    )
+
     else:
-        context.bot.answer_callback_query(callback_query_id=update.callback_query.id, text='Ти вже у списку!', show_alert=True)
+        if str(update.callback_query.message.text).find(str(update.callback_query.from_user.first_name) + " " +
+                                                        str(update.callback_query.from_user.last_name)) != -1 and update.callback_query.data == "cancel":
+            context.bot.answer_callback_query(callback_query_id=update.callback_query.id, text='Відмінено!',
+                                              show_alert=True)
+
+        elif str(update.callback_query.message.text).find(str(update.callback_query.from_user.first_name) + " " +
+                                                          str(update.callback_query.from_user.last_name)) == -1 and update.callback_query.data == "cancel":
+            context.bot.answer_callback_query(callback_query_id=update.callback_query.id, text='Тебе ще не має у '
+                                                                                               'списку!',
+                                              show_alert=True)
+
+        else:
+            context.bot.answer_callback_query(callback_query_id=update.callback_query.id, text='Ти вже у списку!',
+                                              show_alert=True)
 
 
 def main():
