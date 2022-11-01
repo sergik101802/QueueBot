@@ -70,6 +70,11 @@ def cancel(update, context):  # відміна черги (не працює, х
     return ConversationHandler.END
 
 
+def keyboard_callback(update, context):
+    query = update.callback_query
+    query.edit_message_text(text=update.callback_query.message.text+"Selected option: {}".format(query.data), reply_markup=keyboard)
+
+
 def main():
     updater = Updater("5119453197:AAHpO7pymF2BQkevcFg6r0r4zZQcKU7iRfY", use_context=True)  # API token бота
     dp = updater.dispatcher  # якась важна штука
@@ -89,7 +94,7 @@ def main():
     )
 
     dp.add_handler(conv_handler)  # прив'язка діалогу
-
+    dp.add_handler(CallbackQueryHandler(keyboard_callback))
     dp.add_error_handler(error)  # прив'язка виведення помилок
 
     updater.start_polling()
