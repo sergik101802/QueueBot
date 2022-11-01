@@ -78,12 +78,13 @@ def cancel(update, context):  # відміна черги (не працює, х
 
 
 def keyboard_callback(update, context):
+    #  якщо не знайдено у списку і НЕ cancel
     if str(update.callback_query.message.text).find(str(update.callback_query.from_user.first_name) + " " +
                                                     str(update.callback_query.from_user.last_name)) == -1 and str(update.callback_query.data) != 'cancel':
-        for i in range(0, len(buttons)-1):
-            for j in range (0, len(buttons[i])):
+        for i in range(0, len(buttons) - 1):
+            for j in range(0, len(buttons[i])):
                 if (buttons[i][j] == InlineKeyboardButton(update.callback_query.data,
-                                                       callback_data=update.callback_query.data)):
+                                                          callback_data=update.callback_query.data)):
                     buttons[i].remove(
                         InlineKeyboardButton(update.callback_query.data, callback_data=update.callback_query.data))
                     keyboard = InlineKeyboardMarkup(buttons)
@@ -96,21 +97,22 @@ def keyboard_callback(update, context):
                         reply_markup=keyboard,
                     )
 
+    #  якщо знайдено у списку і cancel
+    elif str(update.callback_query.message.text).find(str(update.callback_query.from_user.first_name) + " " +
+                                                      str(update.callback_query.from_user.last_name)) != -1 and update.callback_query.data == "cancel":
+        ###
+        #  видалити із списку, повернути кнопку на місце!!!
+        ###
+        context.bot.answer_callback_query(callback_query_id=update.callback_query.id, text='Відмінено!',show_alert=True)
+
+    # якщо не знайдено у списку і cancel
+    elif str(update.callback_query.message.text).find(str(update.callback_query.from_user.first_name) + " " +
+                                                      str(update.callback_query.from_user.last_name)) == -1 and update.callback_query.data == "cancel":
+        context.bot.answer_callback_query(callback_query_id=update.callback_query.id, text='Тебе ще не має у списку!', show_alert=True)
+
+    # якщо знайдено у списку і НЕ cancel
     else:
-        if str(update.callback_query.message.text).find(str(update.callback_query.from_user.first_name) + " " +
-                                                        str(update.callback_query.from_user.last_name)) != -1 and update.callback_query.data == "cancel":
-            context.bot.answer_callback_query(callback_query_id=update.callback_query.id, text='Відмінено!',
-                                              show_alert=True)
-
-        elif str(update.callback_query.message.text).find(str(update.callback_query.from_user.first_name) + " " +
-                                                          str(update.callback_query.from_user.last_name)) == -1 and update.callback_query.data == "cancel":
-            context.bot.answer_callback_query(callback_query_id=update.callback_query.id, text='Тебе ще не має у '
-                                                                                               'списку!',
-                                              show_alert=True)
-
-        else:
-            context.bot.answer_callback_query(callback_query_id=update.callback_query.id, text='Ти вже у списку!',
-                                              show_alert=True)
+        context.bot.answer_callback_query(callback_query_id=update.callback_query.id, text='Ти вже у списку, натисни Cancel для відміни', show_alert=True)
 
 
 def main():
