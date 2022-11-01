@@ -1,3 +1,4 @@
+import telegram
 from telegram.ext import (
     Updater,
     CommandHandler,
@@ -23,54 +24,97 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 NAME = range(1)
 
-buttons = [  # створюємо кнопочки, на які будемо нажимать (циклом не виходило ініціалізувать buttons,
-    # нічого просто потім не надсилається)
+buttons = [
     [
         InlineKeyboardButton("1", callback_data="1"),
+    ],
+    [
         InlineKeyboardButton("2", callback_data="2"),
+    ],
+    [
         InlineKeyboardButton("3", callback_data="3"),
+    ],
+    [
         InlineKeyboardButton("4", callback_data="4"),
     ],
     [
         InlineKeyboardButton("5", callback_data="5"),
+    ],
+    [
         InlineKeyboardButton("6", callback_data="6"),
+    ],
+    [
         InlineKeyboardButton("7", callback_data="7"),
+    ],
+    [
         InlineKeyboardButton("8", callback_data="8"),
     ],
     [
         InlineKeyboardButton("9", callback_data="9"),
+    ],
+    [
         InlineKeyboardButton("10", callback_data="10"),
+    ],
+    [
         InlineKeyboardButton("11", callback_data="11"),
+    ],
+    [
         InlineKeyboardButton("12", callback_data="12"),
     ],
     [
         InlineKeyboardButton("13", callback_data="13"),
+    ],
+    [
         InlineKeyboardButton("14", callback_data="14"),
+    ],
+    [
         InlineKeyboardButton("15", callback_data="15"),
+    ],
+    [
         InlineKeyboardButton("16", callback_data="16"),
     ],
     [
         InlineKeyboardButton("17", callback_data="17"),
+    ],
+    [
         InlineKeyboardButton("18", callback_data="18"),
+    ],
+    [
         InlineKeyboardButton("19", callback_data="19"),
+    ],
+    [
         InlineKeyboardButton("20", callback_data="20"),
     ],
     [
         InlineKeyboardButton("21", callback_data="21"),
+    ],
+    [
         InlineKeyboardButton("22", callback_data="22"),
+    ],
+    [
         InlineKeyboardButton("23", callback_data="23"),
+    ],
+    [
         InlineKeyboardButton("24", callback_data="24"),
     ],
     [
         InlineKeyboardButton("25", callback_data="25"),
+    ],
+    [
         InlineKeyboardButton("26", callback_data="26"),
+    ],
+    [
         InlineKeyboardButton("27", callback_data="27"),
+    ],
+    [
         InlineKeyboardButton("28", callback_data="28"),
     ],
     [
         InlineKeyboardButton("29", callback_data="29"),
-        InlineKeyboardButton("30", callback_data="30"),
     ],
+    [
+        InlineKeyboardButton("30", callback_data="30"),
+    ]
 ]
 # https://core.telegram.org/bots/api#inlinekeyboardmarkup
 
@@ -115,16 +159,20 @@ def cancel(update, context):  # відміна черги (не працює, х
 
 
 def keyboard_callback(update, context):
-    query = update.callback_query
-    text = update.callback_query.message.text
-    query.edit_message_text(
-        text=update.callback_query.message.text.replace(
-            f"{query.data}.",
-            f"{query.data}. {'Name_or_surname'} {'Name_or_surname'}", 1
-        ),
-        reply_markup=keyboard,
-    )
-
+    if str(update.callback_query.message.text).find(str(update.callback_query.from_user.first_name) + " " +
+                      str(update.callback_query.from_user.last_name)) == -1:
+        buttons.remove([InlineKeyboardButton(update.callback_query.data, callback_data=update.callback_query.data)])
+        keyboard = InlineKeyboardMarkup(buttons)
+        update.callback_query.edit_message_text(
+            text=update.callback_query.message.text.replace(
+                f"{update.callback_query.data}.",
+                f"{update.callback_query.data}. {update.callback_query.from_user.first_name} {update.callback_query.from_user.last_name}",
+                1
+            ),
+            reply_markup=keyboard,
+        )
+    else:
+        context.bot.answer_callback_query(callback_query_id=update.callback_query.id, text='Ти вже у списку!', show_alert=True)
 
 
 def main():
