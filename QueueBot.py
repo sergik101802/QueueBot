@@ -96,6 +96,7 @@ def keyboard_callback(update, context):
                         ),
                         reply_markup=keyboard,
                     )
+                    break
 
     #  якщо знайдено у списку і cancel
     elif str(update.callback_query.message.text).find(str(update.callback_query.from_user.first_name) + " " +
