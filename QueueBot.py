@@ -1,18 +1,15 @@
+import logging
 import math
 
-import telegram
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     Updater,
     CommandHandler,
     MessageHandler,
     Filters,
     ConversationHandler,
-    ContextTypes,
     CallbackQueryHandler,
 )
-
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
-import logging
 
 # посилання на бота: https://t.me/QueueTM_bot
 # https://core.telegram.org/bots/api Telegram Bot API
@@ -29,6 +26,7 @@ NAME = range(1)
 count = 28
 number = count // 4 if count % 4 == 0 else count // 4 + 1
 
+
 def genbuttons():
     buttons = [
         [
@@ -40,11 +38,13 @@ def genbuttons():
     buttons.append([InlineKeyboardButton("Cancel", callback_data="cancel")])
     return buttons
 
+
 # https://core.telegram.org/bots/api#inlinekeyboardmarkup
 
 keyboard = []
 
 identificator = 0
+
 
 # опис команди /start
 def start(update, context):
@@ -96,7 +96,7 @@ def keyboard_callback(update, context):
         for i in range(0, len(keyboard[ident]) - 1):
             for j in range(0, len(keyboard[ident][i])):
                 if (keyboard[ident][i][j] == InlineKeyboardButton(update.callback_query.data,
-                                                          callback_data=update.callback_query.data)):
+                                                                  callback_data=update.callback_query.data)):
                     keyboard[ident][i].remove(
                         InlineKeyboardButton(update.callback_query.data, callback_data=update.callback_query.data))
                     update.callback_query.edit_message_text(
@@ -113,19 +113,20 @@ def keyboard_callback(update, context):
                                                       str(update.callback_query.from_user.last_name)) != -1 and update.callback_query.data == "cancel":
         listofqueue = str(update.callback_query.message.text).split('\n')
         for i in range(0, len(listofqueue)):
-            if listofqueue[i].find(str(update.callback_query.from_user.first_name) + " " + str(update.callback_query.from_user.last_name))!=-1:
+            if listofqueue[i].find(str(update.callback_query.from_user.first_name) + " " + str(
+                    update.callback_query.from_user.last_name)) != -1:
                 num = listofqueue[i].replace(
-                    f". {str(update.callback_query.from_user.first_name)} {str(update.callback_query.from_user.last_name)}", f"",
+                    f". {str(update.callback_query.from_user.first_name)} {str(update.callback_query.from_user.last_name)}",
+                    f"",
                     1)
-                keyboard[ident][math.floor((int(num)-1)/4)].insert(0, InlineKeyboardButton(num, callback_data=num))
-                keyboard[ident][math.floor((int(num)-1)/4)].sort(key=lambda x: int(x.callback_data))
+                keyboard[ident][math.floor((int(num) - 1) / 4)].insert(0, InlineKeyboardButton(num, callback_data=num))
+                keyboard[ident][math.floor((int(num) - 1) / 4)].sort(key=lambda x: int(x.callback_data))
                 break
 
-        ###                        ###
         update.callback_query.edit_message_text(
             text=update.callback_query.message.text.replace(
                 f" {str(update.callback_query.from_user.first_name)} {str(update.callback_query.from_user.last_name)}",
-               f"",
+                f"",
                 1
             ),
             reply_markup=InlineKeyboardMarkup(keyboard[ident]),
