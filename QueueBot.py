@@ -74,7 +74,7 @@ def namequeue(update, context):  # вивід черги
 
 
 def cancel(update, context):  # відміна черги (не працює, хоча по-ідеї завершує діалог)
-    update.message.reply_text("Чергу відмінено!")
+    update.message.reply_text("Чергу закрито")
     return ConversationHandler.END
 
 
@@ -93,7 +93,7 @@ def keyboard_callback(update, context):
                     update.callback_query.edit_message_text(
                         text=update.callback_query.message.text.replace(
                             f"{update.callback_query.data}.",
-                            f"{update.callback_query.data}. {update.callback_query.from_user.first_name} {update.callback_query.from_user.last_name}",
+                            f"{update.callback_query.data}. {str(update.callback_query.from_user.first_name)} {str(update.callback_query.from_user.last_name)}",
                             1
                         ),
                         reply_markup=keyboard,
@@ -104,18 +104,18 @@ def keyboard_callback(update, context):
                                                       str(update.callback_query.from_user.last_name)) != -1 and update.callback_query.data == "cancel":
         listofqueue = str(update.callback_query.message.text).split('\n')
         for i in range(0, len(listofqueue)):
-            if listofqueue[i].find(update.callback_query.from_user.first_name + " " + update.callback_query.from_user.last_name)!=-1:
+            if listofqueue[i].find(str(update.callback_query.from_user.first_name) + " " + str(update.callback_query.from_user.last_name))!=-1:
                 num = listofqueue[i].replace(
-                    f". {update.callback_query.from_user.first_name} {update.callback_query.from_user.last_name}", f"",
+                    f". {str(update.callback_query.from_user.first_name)} {str(update.callback_query.from_user.last_name)}", f"",
                     1)
-                buttons[math.floor((int(num)-1)/4)].insert((int(num)-1)//4, InlineKeyboardButton(num, callback_data=num))
+                buttons[math.floor((int(num)-1)/4)].insert(0, InlineKeyboardButton(num, callback_data=num))
                 buttons[math.floor((int(num)-1)/4)].sort(key=lambda x: int(x.callback_data))
                 break
 
         ###                        ###
         update.callback_query.edit_message_text(
             text=update.callback_query.message.text.replace(
-                f" {update.callback_query.from_user.first_name} {update.callback_query.from_user.last_name}",
+                f" {str(update.callback_query.from_user.first_name)} {str(update.callback_query.from_user.last_name)}",
                f"",
                 1
             ),
