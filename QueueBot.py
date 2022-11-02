@@ -28,14 +28,17 @@ NAME = range(1)
 
 count = 28
 number = count // 4 if count % 4 == 0 else count // 4 + 1
-buttons = [
-    [
-        InlineKeyboardButton(f"{j + 1}", callback_data=f"{j + 1}")
-        for j in range(i * 4, i * 4 + count % 4 if i * 4 + 4 > count else i * 4 + 4)
+
+def genbuttons():
+    buttons = [
+        [
+            InlineKeyboardButton(f"{j + 1}", callback_data=f"{j + 1}")
+            for j in range(i * 4, i * 4 + count % 4 if i * 4 + 4 > count else i * 4 + 4)
+        ]
+        for i in range(number)
     ]
-    for i in range(number)
-]
-buttons.append([InlineKeyboardButton("Cancel", callback_data="cancel")])
+    buttons.append([InlineKeyboardButton("Cancel", callback_data="cancel")])
+    return buttons
 
 # https://core.telegram.org/bots/api#inlinekeyboardmarkup
 
@@ -67,7 +70,9 @@ def namequeue(update, context):  # вивід черги
     queue = ""
     for i in range(1, count + 1):
         queue += str(i) + ".\n"  # створюємо список (1.\n2.\n)
-    keyboard.insert(identificator, buttons)
+    b = genbuttons()
+    keyboard.insert(identificator, b)
+    del b
     update.message.reply_text(
         name + queue, reply_markup=InlineKeyboardMarkup(keyboard[identificator])
     )  # надсилаємо повідомлення: назва черги, список та
@@ -102,7 +107,6 @@ def keyboard_callback(update, context):
                         ),
                         reply_markup=InlineKeyboardMarkup(keyboard[ident]),
                     )
-                    print(keyboard[ident])
                     break
     #  якщо знайдено у списку і cancel
     elif str(update.callback_query.message.text).find(str(update.callback_query.from_user.first_name) + " " +
