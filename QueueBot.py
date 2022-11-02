@@ -1,3 +1,5 @@
+import math
+
 import telegram
 from telegram.ext import (
     Updater,
@@ -59,9 +61,9 @@ def startqueue(update, context):
 
 
 def namequeue(update, context):  # вивід черги
-    name = update.message.text + "\n\n"  # записуємо введену назву черги в змінну
+    name = update.message.text + "\n"  # записуємо введену назву черги в змінну
     queue = ""
-    for i in range(1, count+1):
+    for i in range(1, count + 1):
         queue += str(i) + ".\n"  # створюємо список (1.\n2.\n)
 
     update.message.reply_text(
@@ -79,7 +81,8 @@ def cancel(update, context):  # відміна черги (не працює, х
 def keyboard_callback(update, context):
     #  якщо не знайдено у списку і НЕ cancel
     if str(update.callback_query.message.text).find(str(update.callback_query.from_user.first_name) + " " +
-                                                    str(update.callback_query.from_user.last_name)) == -1 and str(update.callback_query.data) != 'cancel':
+                                                    str(update.callback_query.from_user.last_name)) == -1 and str(
+        update.callback_query.data) != 'cancel':
         for i in range(0, len(buttons) - 1):
             for j in range(0, len(buttons[i])):
                 if (buttons[i][j] == InlineKeyboardButton(update.callback_query.data,
@@ -96,31 +99,40 @@ def keyboard_callback(update, context):
                         reply_markup=keyboard,
                     )
                     break
-
     #  якщо знайдено у списку і cancel
     elif str(update.callback_query.message.text).find(str(update.callback_query.from_user.first_name) + " " +
                                                       str(update.callback_query.from_user.last_name)) != -1 and update.callback_query.data == "cancel":
-        ###                        ###
-        #тут!!!
+        listofqueue = str(update.callback_query.message.text).split('\n')
+        for i in range(0, len(listofqueue)):
+            if listofqueue[i].find(update.callback_query.from_user.first_name + " " + update.callback_query.from_user.last_name)!=-1:
+                num = listofqueue[i].replace(
+                    f". {update.callback_query.from_user.first_name} {update.callback_query.from_user.last_name}", f"",
+                    1)
+                buttons[math.floor((int(num)-1)/4)].insert((int(num)-1)//4, InlineKeyboardButton(num, callback_data=num))
+                break
+
         ###                        ###
         update.callback_query.edit_message_text(
             text=update.callback_query.message.text.replace(
-                f"{update.callback_query.from_user.first_name} {update.callback_query.from_user.last_name}",
-                f"",
+                f" {update.callback_query.from_user.first_name} {update.callback_query.from_user.last_name}",
+               f"",
                 1
             ),
             reply_markup=InlineKeyboardMarkup(buttons),
         )
-        context.bot.answer_callback_query(callback_query_id=update.callback_query.id, text='Відмінено!', show_alert=True)
+        context.bot.answer_callback_query(callback_query_id=update.callback_query.id, text='Відмінено!',
+                                          show_alert=True)
 
     # якщо не знайдено у списку і cancel
     elif str(update.callback_query.message.text).find(str(update.callback_query.from_user.first_name) + " " +
                                                       str(update.callback_query.from_user.last_name)) == -1 and update.callback_query.data == "cancel":
-        context.bot.answer_callback_query(callback_query_id=update.callback_query.id, text='Тебе ще не має у списку!', show_alert=True)
+        context.bot.answer_callback_query(callback_query_id=update.callback_query.id, text='Тебе ще не має у списку!',
+                                          show_alert=True)
 
     # якщо знайдено у списку і НЕ cancel
     else:
-        context.bot.answer_callback_query(callback_query_id=update.callback_query.id, text='Ти вже у списку, натисни Cancel для відміни', show_alert=True)
+        context.bot.answer_callback_query(callback_query_id=update.callback_query.id,
+                                          text='Ти вже у списку, натисни Cancel для відміни', show_alert=True)
 
 
 def main():
