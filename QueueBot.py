@@ -109,6 +109,7 @@ def keyboard_callback(update, context):
                     f". {update.callback_query.from_user.first_name} {update.callback_query.from_user.last_name}", f"",
                     1)
                 buttons[math.floor((int(num)-1)/4)].insert((int(num)-1)//4, InlineKeyboardButton(num, callback_data=num))
+                buttons[math.floor((int(num)-1)/4)].sort(key=lambda x: int(x.callback_data))
                 break
 
         ###                        ###
