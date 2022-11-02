@@ -39,8 +39,9 @@ buttons.append([InlineKeyboardButton("Cancel", callback_data="cancel")])
 
 # https://core.telegram.org/bots/api#inlinekeyboardmarkup
 
-keyboard = InlineKeyboardMarkup(buttons)  # засовуємо наші кнопочки в єдину клавіатуру
+keyboard = []
 
+identificator = 0
 
 # опис команди /start
 def start(update, context):
@@ -61,15 +62,17 @@ def startqueue(update, context):
 
 
 def namequeue(update, context):  # вивід черги
-    name = update.message.text + "\n"  # записуємо введену назву черги в змінну
+    global identificator, keyboard
+    name = str(identificator) + "\n" + update.message.text + '\n'  # записуємо введену назву черги в змінну
     queue = ""
     for i in range(1, count + 1):
         queue += str(i) + ".\n"  # створюємо список (1.\n2.\n)
-
+    keyboard.insert(identificator, buttons)
     update.message.reply_text(
-        name + queue, reply_markup=keyboard
+        name + queue, reply_markup=InlineKeyboardMarkup(keyboard[identificator])
     )  # надсилаємо повідомлення: назва черги, список та
     # клавіатуру
+    identificator += 1
     return ConversationHandler.END  # повертаємо кінець діалогу
 
 
@@ -79,25 +82,27 @@ def cancel(update, context):  # відміна черги (не працює, х
 
 
 def keyboard_callback(update, context):
+    global keyboard
+    ident = int(str(update.callback_query.message.text).split("\n")[0])
     #  якщо не знайдено у списку і НЕ cancel
     if str(update.callback_query.message.text).find(str(update.callback_query.from_user.first_name) + " " +
                                                     str(update.callback_query.from_user.last_name)) == -1 and str(
         update.callback_query.data) != 'cancel':
-        for i in range(0, len(buttons) - 1):
-            for j in range(0, len(buttons[i])):
-                if (buttons[i][j] == InlineKeyboardButton(update.callback_query.data,
+        for i in range(0, len(keyboard[ident]) - 1):
+            for j in range(0, len(keyboard[ident][i])):
+                if (keyboard[ident][i][j] == InlineKeyboardButton(update.callback_query.data,
                                                           callback_data=update.callback_query.data)):
-                    buttons[i].remove(
+                    keyboard[ident][i].remove(
                         InlineKeyboardButton(update.callback_query.data, callback_data=update.callback_query.data))
-                    keyboard = InlineKeyboardMarkup(buttons)
                     update.callback_query.edit_message_text(
                         text=update.callback_query.message.text.replace(
                             f"{update.callback_query.data}.",
                             f"{update.callback_query.data}. {str(update.callback_query.from_user.first_name)} {str(update.callback_query.from_user.last_name)}",
                             1
                         ),
-                        reply_markup=keyboard,
+                        reply_markup=InlineKeyboardMarkup(keyboard[ident]),
                     )
+                    print(keyboard[ident])
                     break
     #  якщо знайдено у списку і cancel
     elif str(update.callback_query.message.text).find(str(update.callback_query.from_user.first_name) + " " +
@@ -108,8 +113,8 @@ def keyboard_callback(update, context):
                 num = listofqueue[i].replace(
                     f". {str(update.callback_query.from_user.first_name)} {str(update.callback_query.from_user.last_name)}", f"",
                     1)
-                buttons[math.floor((int(num)-1)/4)].insert(0, InlineKeyboardButton(num, callback_data=num))
-                buttons[math.floor((int(num)-1)/4)].sort(key=lambda x: int(x.callback_data))
+                keyboard[ident][math.floor((int(num)-1)/4)].insert(0, InlineKeyboardButton(num, callback_data=num))
+                keyboard[ident][math.floor((int(num)-1)/4)].sort(key=lambda x: int(x.callback_data))
                 break
 
         ###                        ###
@@ -119,7 +124,7 @@ def keyboard_callback(update, context):
                f"",
                 1
             ),
-            reply_markup=InlineKeyboardMarkup(buttons),
+            reply_markup=InlineKeyboardMarkup(keyboard[ident]),
         )
         context.bot.answer_callback_query(callback_query_id=update.callback_query.id, text='Відмінено!',
                                           show_alert=True)
