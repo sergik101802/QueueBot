@@ -1,5 +1,5 @@
 import logging
-import math
+import mysql.connector
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
@@ -26,6 +26,14 @@ NAME = range(1)
 count = 28
 number = count // 4 if count % 4 == 0 else count // 4 + 1
 
+mydb = mysql.connector.connect(
+    host="127.0.0.1",
+    port="3306",
+    user="root",
+    password="Lafazaca100",
+    database="queue"
+)
+
 
 def genbuttons():
     buttons = [
@@ -43,7 +51,10 @@ def genbuttons():
 
 keyboard = []
 
-identificator = 0
+tables = mydb.cursor()
+tables.execute("show tables;")
+myresult = tables.fetchall()
+identificator = int(len(myresult))
 
 
 # опис команди /start
@@ -70,11 +81,12 @@ def namequeue(update, context):  # вивід черги
     queue = ""
     for i in range(1, count + 1):
         queue += str(i) + ".\n"  # створюємо список (1.\n2.\n)
-    b = genbuttons()
-    keyboard.insert(identificator, b)
-    del b
+
+    mycursor = mydb.cursor()
+    mycursor.execute("create table q" + str(identificator) + "(num int primary key, name varchar(100), surname "
+                                                             "varchar(100));")
     update.message.reply_text(
-        name + queue, reply_markup=InlineKeyboardMarkup(keyboard[identificator])
+        name + queue, reply_markup=InlineKeyboardMarkup(genbuttons())
     )  # надсилаємо повідомлення: назва черги, список та
     # клавіатуру
     identificator += 1
@@ -87,64 +99,91 @@ def cancel(update, context):  # відміна черги (не працює, х
 
 
 def keyboard_callback(update, context):
-    global keyboard
+    global keyboard, mydb
     ident = int(str(update.callback_query.message.text).split("\n")[0])
+    button_click = mydb.cursor()
     #  якщо не знайдено у списку і НЕ cancel
     if str(update.callback_query.message.text).find(str(update.callback_query.from_user.first_name) + " " +
                                                     str(update.callback_query.from_user.last_name)) == -1 and str(
         update.callback_query.data) != 'cancel':
-        for i in range(0, len(keyboard[ident]) - 1):
-            for j in range(0, len(keyboard[ident][i])):
-                if (keyboard[ident][i][j] == InlineKeyboardButton(update.callback_query.data,
-                                                                  callback_data=update.callback_query.data)):
-                    keyboard[ident][i].remove(
-                        InlineKeyboardButton(update.callback_query.data, callback_data=update.callback_query.data))
-                    update.callback_query.edit_message_text(
-                        text=update.callback_query.message.text.replace(
-                            f"{update.callback_query.data}.",
-                            f"{update.callback_query.data}. {str(update.callback_query.from_user.first_name)} {str(update.callback_query.from_user.last_name)}",
-                            1
-                        ),
-                        reply_markup=InlineKeyboardMarkup(keyboard[ident]),
-                    )
-                    break
-    #  якщо знайдено у списку і cancel
-    elif str(update.callback_query.message.text).find(str(update.callback_query.from_user.first_name) + " " +
-                                                      str(update.callback_query.from_user.last_name)) != -1 and update.callback_query.data == "cancel":
-        listofqueue = str(update.callback_query.message.text).split('\n')
-        for i in range(0, len(listofqueue)):
-            if listofqueue[i].find(str(update.callback_query.from_user.first_name) + " " + str(
-                    update.callback_query.from_user.last_name)) != -1:
-                num = listofqueue[i].replace(
-                    f". {str(update.callback_query.from_user.first_name)} {str(update.callback_query.from_user.last_name)}",
-                    f"",
-                    1)
-                keyboard[ident][math.floor((int(num) - 1) / 4)].insert(0, InlineKeyboardButton(num, callback_data=num))
-                keyboard[ident][math.floor((int(num) - 1) / 4)].sort(key=lambda x: int(x.callback_data))
-                break
+        button_click.execute("insert into q" + str(ident) + " value(" + update.callback_query.data + ",'"
+                             + str(update.callback_query.from_user.first_name) + "', '" + str(
+            update.callback_query.from_user.last_name) + "');")
+        mydb.commit()
 
+        kb_temp = genbuttons()
+        kb = []
+
+        button_click = mydb.cursor()
+        button_click.execute("select num from q" + str(ident) + ";")
+        allnums = button_click.fetchall()
+        all_keys = []
+
+        for i in allnums:
+            all_keys.append(InlineKeyboardButton(str(i[0]), callback_data=str(i[0])))
+        for i in range(0, len(kb_temp) - 1):
+            t = list(set(kb_temp[i]) - set(all_keys))
+            t.sort(key=lambda x: int(x.callback_data))
+            kb.append(t)
+        kb.append([InlineKeyboardButton("Cancel", callback_data="cancel")])
         update.callback_query.edit_message_text(
             text=update.callback_query.message.text.replace(
-                f" {str(update.callback_query.from_user.first_name)} {str(update.callback_query.from_user.last_name)}",
-                f"",
+                f"{update.callback_query.data}.",
+                f"{update.callback_query.data}. {str(update.callback_query.from_user.first_name)} {str(update.callback_query.from_user.last_name)}",
                 1
             ),
-            reply_markup=InlineKeyboardMarkup(keyboard[ident]),
+            reply_markup=InlineKeyboardMarkup(kb),
         )
-        context.bot.answer_callback_query(callback_query_id=update.callback_query.id, text='Відмінено!',
-                                          show_alert=True)
-
-    # якщо не знайдено у списку і cancel
     elif str(update.callback_query.message.text).find(str(update.callback_query.from_user.first_name) + " " +
-                                                      str(update.callback_query.from_user.last_name)) == -1 and update.callback_query.data == "cancel":
+                                                      str(update.callback_query.from_user.last_name)) != -1 and update.callback_query.data == "cancel":
+        button_click.execute(
+            "delete from q" + str(ident) + " where name='" + str(update.callback_query.from_user.first_name)
+            + "' and surname='" + str(update.callback_query.from_user.last_name) + "';")
+        mydb.commit()
+
+        kb_temp = genbuttons()
+        kb = []
+
+        button_click = mydb.cursor()
+        button_click.execute("select num from q" + str(ident) + ";")
+        allnums = button_click.fetchall()
+        all_keys = []
+        if len(allnums) == 0:
+            update.callback_query.edit_message_text(
+                text=update.callback_query.message.text.replace(
+                    f" {str(update.callback_query.from_user.first_name)} {str(update.callback_query.from_user.last_name)}",
+                    f"",
+                    1
+                ),
+                reply_markup=InlineKeyboardMarkup(genbuttons()),
+            )
+        else:
+            for i in allnums:
+                all_keys.append(InlineKeyboardButton(str(i[0]), callback_data=str(i[0])))
+            for i in range(0, len(kb_temp) - 1):
+                t = list(set(kb_temp[i]) - set(all_keys))
+                t.sort(key=lambda x: int(x.callback_data))
+                kb.append(t)
+            kb.append([InlineKeyboardButton("Cancel", callback_data="cancel")])
+            update.callback_query.edit_message_text(
+                text=update.callback_query.message.text.replace(
+                    f" {str(update.callback_query.from_user.first_name)} {str(update.callback_query.from_user.last_name)}",
+                    f"",
+                    1
+                ),
+                reply_markup=InlineKeyboardMarkup(kb),
+            )
+            context.bot.answer_callback_query(callback_query_id=update.callback_query.id, text='Відмінено!',
+                                              show_alert=True)
+    elif str(update.callback_query.message.text).find(str(update.callback_query.from_user.first_name) + " " +
+                                                          str(update.callback_query.from_user.last_name)) == -1 and update.callback_query.data == "cancel":
         context.bot.answer_callback_query(callback_query_id=update.callback_query.id, text='Тебе ще не має у списку!',
                                           show_alert=True)
 
-    # якщо знайдено у списку і НЕ cancel
+        # якщо знайдено у списку і НЕ cancel
     else:
         context.bot.answer_callback_query(callback_query_id=update.callback_query.id,
                                           text='Ти вже у списку, натисни Cancel для відміни', show_alert=True)
-
 
 def main():
     updater = Updater(
