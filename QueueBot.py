@@ -30,7 +30,7 @@ mydb = mysql.connector.connect(
     host="127.0.0.1",
     port="3306",
     user="root",
-    password="Lafazaca100",
+    password="Pass123",
     database="queue"
 )
 
